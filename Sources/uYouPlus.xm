@@ -433,11 +433,17 @@ YTMainAppControlsOverlayView *controlsOverlayView;
 %end
 
 %hook YTAdsInnerTubeContextDecorator
-- (void)decorateContext:(id)context { %orig(nil); }
+- (void)decorateContext:(id)context {
+    id nilContext = nil;
+    %orig(nilContext);
+}
 %end
 
 %hook YTAccountScopedAdsInnerTubeContextDecorator
-- (void)decorateContext:(id)context { %orig(nil); }
+- (void)decorateContext:(id)context {
+    id nilContext = nil;
+    %orig(nilContext);
+}
 %end
 
 %hook YTLocalPlaybackController
