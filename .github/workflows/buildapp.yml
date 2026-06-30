@@ -145,7 +145,13 @@ jobs:
           sed -i '' "29s#.*#DISPLAY_NAME = ${{ env.APP_NAME }}#g" Makefile                        # Modify the app name
           sed -i '' "1s#.*#export TARGET = iphone:clang:${{ inputs.sdk_version }}:14.0#g" Makefile # Modify the SDK version
           find Tweaks Sources -type f \( -name "*.x" -o -name "*.xm" -o -name "*.m" \) -print0 | xargs -0 perl -0pi -e 's/NSMutableArray( <NSNumber \*>)? \*mutableCategories = %orig\.mutableCopy;/NSArray$1 *originalCategories = %orig;\n    NSMutableArray$1 *mutableCategories = [originalCategories mutableCopy];/g'
-          perl -0pi -e 's/return initPlayerPiPControllerIfNeeded\(%orig\);/id originalController = %orig;\n    return initPlayerPiPControllerIfNeeded(originalController);/g' Tweaks/YouPiP/LegacyPiPCompat.x
+
+          perl -0pi -e 's/return initPlayerPiPControllerIfNeeded\(%orig\(delegate\)\);/id originalController = %orig(delegate);\n    return initPlayerPiPControllerIfNeeded(originalController);/g' Tweaks/YouPiP/LegacyPiPCompat.x
+          perl -0pi -e 's/return initPlayerPiPControllerIfNeeded\(%orig\(delegate, parentResponder\)\);/id originalController = %orig(delegate, parentResponder);\n    return initPlayerPiPControllerIfNeeded(originalController);/g' Tweaks/YouPiP/LegacyPiPCompat.x
+
+          echo "---- LegacyPiPCompat after patch ----"
+          sed -n '70,90p' Tweaks/YouPiP/LegacyPiPCompat.x
+          
           grep -R "%orig.mutableCopy" -n Tweaks Sources || true
           grep -R "\[%orig mutableCopy\]" -n Tweaks Sources || true
           make package THEOS_PACKAGE_SCHEME=rootless IPA=Payload/YouTube.app FINALPACKAGE=1
