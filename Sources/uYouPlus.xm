@@ -607,7 +607,8 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
     %orig;
 }
 - (void)addSectionsFromArray:(NSArray <YTIItemSectionRenderer *> *)array {
-    %orig(filteredArray(array));
+    NSArray <YTIItemSectionRenderer *> *filteredSections = filteredArray(array);
+    %orig(filteredSections);
 }
 %end
 %end
