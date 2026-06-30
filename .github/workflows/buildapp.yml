@@ -150,17 +150,24 @@ jobs:
           perl -0pi -e 's/return initPlayerPiPControllerIfNeeded\(%orig, delegate, nil\);/id originalController = %orig;\n    return initPlayerPiPControllerIfNeeded(originalController, delegate, nil);/g; s/return initPlayerPiPControllerIfNeeded\(%orig, delegate, parentResponder\);/id originalController = %orig;\n    return initPlayerPiPControllerIfNeeded(originalController, delegate, parentResponder);/g' Tweaks/YouPiP/LegacyPiPCompat.x
 
           perl -0pi -e 's/return filteredFormats\(%orig\(error\)\);/id originalFormats = %orig(error);\n    return filteredFormats(originalFormats);/g; s/return filteredFormats\(%orig\);/id originalFormats = %orig;\n    return filteredFormats(originalFormats);/g' Tweaks/YTUHD/Tweak.xm
+
+          perl -0pi -e 's/return topControls\(self, %orig\);/id originalControls = %orig;\n    return topControls(self, originalControls);/g' Tweaks/YTVideoOverlay/Tweak.x
+
           
           echo "---- LegacyPiPCompat after patch ----"
           sed -n '70,90p' Tweaks/YouPiP/LegacyPiPCompat.x
 
           echo "---- YTUHD after patch ----"
           grep -n "filteredFormats" Tweaks/YTUHD/Tweak.xm || true
+
+          echo "---- YTVideoOverlay after patch ----"
+          grep -n "topControls" Tweaks/YTVideoOverlay/Tweak.x || true
           
           grep -R "%orig.mutableCopy" -n Tweaks Sources || true
           grep -R "\[%orig mutableCopy\]" -n Tweaks Sources || true
           grep -R "initPlayerPiPControllerIfNeeded(%orig" -n Tweaks Sources || true
           grep -R "filteredFormats(%orig" -n Tweaks Sources || true
+          grep -R "topControls(self, %orig" -n Tweaks Sources || true
           make package THEOS_PACKAGE_SCHEME=rootless IPA=Payload/YouTube.app FINALPACKAGE=1
           echo "package=$(ls -t packages | head -n1)" >>$GITHUB_OUTPUT
           echo -e "==> \033[1mSHASUM256: $(shasum -a 256 packages/*.ipa | cut -f1 -d' ')\033[0m"
