@@ -145,15 +145,21 @@ jobs:
           sed -i '' "29s#.*#DISPLAY_NAME = ${{ env.APP_NAME }}#g" Makefile                        # Modify the app name
           sed -i '' "1s#.*#export TARGET = iphone:clang:${{ inputs.sdk_version }}:14.0#g" Makefile # Modify the SDK version
 
+          # Fix mutableCategories = %orig.mutableCopy cases without touching iSponsorBlock retVal cases.
           find Tweaks Sources -type f \( -name "*.x" -o -name "*.xm" -o -name "*.m" \) -print0 | xargs -0 perl -0pi -e 's/NSMutableArray( <NSNumber \*>)? \*mutableCategories = %orig\.mutableCopy;/NSArray$1 *originalCategories = %orig;\n    NSMutableArray$1 *mutableCategories = [originalCategories mutableCopy];/g'
 
+          # Fix YouPiP nested %orig usage.
           perl -0pi -e 's/return initPlayerPiPControllerIfNeeded\(%orig, delegate, nil\);/id originalController = %orig;\n    return initPlayerPiPControllerIfNeeded(originalController, delegate, nil);/g; s/return initPlayerPiPControllerIfNeeded\(%orig, delegate, parentResponder\);/id originalController = %orig;\n    return initPlayerPiPControllerIfNeeded(originalController, delegate, parentResponder);/g' Tweaks/YouPiP/LegacyPiPCompat.x
 
+          # Fix YTUHD nested %orig usage.
           perl -0pi -e 's/return filteredFormats\(%orig\(error\)\);/id originalFormats = %orig(error);\n    return filteredFormats(originalFormats);/g; s/return filteredFormats\(%orig\);/id originalFormats = %orig;\n    return filteredFormats(originalFormats);/g' Tweaks/YTUHD/Tweak.xm
 
+          # Fix YTVideoOverlay nested %orig usage.
           perl -0pi -e 's/return topControls\(self, %orig\);/id originalControls = %orig;\n    return topControls(self, originalControls);/g' Tweaks/YTVideoOverlay/Tweak.x
 
-          
+          # Fix uYouPlus nested function call inside %orig(...).
+          perl -0pi -e 's/%orig\(filteredArray\(array\)\);/NSArray *filteredSections = filteredArray(array);\n    %orig(filteredSections);/g' Sources/uYouPlus.xm
+
           echo "---- LegacyPiPCompat after patch ----"
           sed -n '70,90p' Tweaks/YouPiP/LegacyPiPCompat.x
 
@@ -162,12 +168,19 @@ jobs:
 
           echo "---- YTVideoOverlay after patch ----"
           grep -n "topControls" Tweaks/YTVideoOverlay/Tweak.x || true
-          
+
+          echo "---- uYouPlus after patch ----"
+          grep -n "filteredArray(array)" Sources/uYouPlus.xm || true
+          grep -n "filteredSections" Sources/uYouPlus.xm || true
+
+          echo "---- remaining risky patterns ----"
           grep -R "%orig.mutableCopy" -n Tweaks Sources || true
           grep -R "\[%orig mutableCopy\]" -n Tweaks Sources || true
           grep -R "initPlayerPiPControllerIfNeeded(%orig" -n Tweaks Sources || true
           grep -R "filteredFormats(%orig" -n Tweaks Sources || true
           grep -R "topControls(self, %orig" -n Tweaks Sources || true
+          grep -R "%orig(filteredArray(array))" -n Tweaks Sources || true
+
           make package THEOS_PACKAGE_SCHEME=rootless IPA=Payload/YouTube.app FINALPACKAGE=1
           echo "package=$(ls -t packages | head -n1)" >>$GITHUB_OUTPUT
           echo -e "==> \033[1mSHASUM256: $(shasum -a 256 packages/*.ipa | cut -f1 -d' ')\033[0m"
