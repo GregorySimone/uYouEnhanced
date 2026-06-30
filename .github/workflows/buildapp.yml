@@ -158,7 +158,8 @@ jobs:
           perl -0pi -e 's/return topControls\(self, %orig\);/id originalControls = %orig;\n    return topControls(self, originalControls);/g' Tweaks/YTVideoOverlay/Tweak.x
 
           # Fix uYouPlus nested function call inside %orig(...).
-          perl -0pi -e 's/- \(void\)addSectionsFromArray:\(NSArray\s+\*\)array\s*\{\s*%orig\(filteredArray\(array\)\);\s*\}/- (void)addSectionsFromArray:(NSArray *)array {\n    NSArray *filteredSections = filteredArray(array);\n    %orig(filteredSections);\n}/g' Sources/uYouPlus.xm
+          perl -0pi -e 's/%orig\s*\(\s*filteredArray\s*\(\s*array\s*\)\s*\)\s*;/NSArray *filteredSections = filteredArray(array);\n    %orig(filteredSections);/g' Sources/uYouPlus.xm
+
           echo "---- LegacyPiPCompat after patch ----"
           sed -n '70,90p' Tweaks/YouPiP/LegacyPiPCompat.x
 
@@ -171,7 +172,7 @@ jobs:
           echo "---- uYouPlus after patch ----"
           grep -n "addSectionsFromArray" Sources/uYouPlus.xm || true
           grep -n "filteredSections" Sources/uYouPlus.xm || true
-          sed -n '425,445p' Sources/uYouPlus.xm
+          sed -n '600,615p' Sources/uYouPlus.xm
           grep -n "%orig(filteredArray(array))" Sources/uYouPlus.xm && exit 1 || true
 
           echo "---- remaining risky patterns ----"
